@@ -8,7 +8,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { useAuth } from '@/hooks/useAuth'
 
 export default function Home() {
-  const user = useAuth().getCurrentUser()
+  const user = useAuth().currentUser
   const router = useRouter()
 
   useEffect(() => {

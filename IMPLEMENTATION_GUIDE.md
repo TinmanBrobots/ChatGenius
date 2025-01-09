@@ -10,7 +10,7 @@
   - Creates auth user and profile record
   - Email verification required before login
 
-- [x] OAuth integration (Supabase Auth)
+- [x] OAuth integration (Supabase Auth)  # Basic JWT auth implemented, additional providers pending
   - JWT token-based authentication
   - Token stored in localStorage
   - Auth middleware for protected routes
@@ -20,7 +20,7 @@
   - [ ] Custom OAuth scopes
   - [ ] OAuth state validation
 
-- [x] Password reset functionality
+- [x] Password reset functionality  # Basic reset flow implemented via Supabase
   - Added password reset request endpoint
   - Created password reset email template in Supabase
   - Implemented password reset request form
@@ -33,7 +33,7 @@
   - [ ] Password history tracking
   - [ ] Temporary password support
 
-- [x] Session management
+- [x] Session management  # Core session handling implemented via Supabase and AuthProvider
   - Using Supabase session handling
   - Token refresh handled automatically
   - Session state managed in AuthProvider
@@ -51,14 +51,14 @@
   - [ ] Session revocation
   - [ ] Offline session support
 
-- [x] User profile creation
+- [x] User profile creation  # Basic profile management implemented
   - Profiles table with RLS policies
   - Auto-created on registration
   - Stores username, full_name, status
   - Links to Supabase auth.users via ID
   - Row Level Security policies configured
 
-- [x] Email verification
+- [x] Email verification  # Basic verification flow implemented via Supabase
   - Enabled email verification in Supabase
   - Verification required before login
   - Verification status check in login flow
@@ -80,9 +80,9 @@
   - [ ] Account lockout policies
 
 ### 2. Real-time Messaging
-- [ ] WebSocket connection setup
-- [ ] Message sending/receiving
-- [ ] Message persistence in database
+- [x] WebSocket connection setup  # Implemented with Socket.IO
+- [x] Message sending/receiving  # Real-time messaging working with optimistic updates
+- [x] Message persistence in database  # Using Supabase with RLS policies
 - [ ] Message delivery status
 - [ ] Read receipts
 - [ ] Message formatting (basic markdown)
@@ -92,8 +92,8 @@
 - [ ] Typing indicators
 
 ### 3. Channel/DM Organization
-- [ ] Channel creation
-- [ ] Channel types (public/private)
+- [x] Channel creation  # Implemented with public/private options
+- [x] Channel types (public/private)  # Implemented with proper RLS policies
 - [ ] Channel joining/leaving
 - [ ] Channel member management
 - [ ] Direct message conversations
@@ -126,20 +126,20 @@
 - [ ] Status expiration
 
 ### 6. Thread Support
-- [ ] Thread creation
-- [ ] Thread view/UI
+- [x] Thread creation  # Implemented with parent_message_id
+- [x] Thread view/UI  # Implemented with recursive MessageComponent
 - [ ] Thread notifications
-- [ ] Thread participant list
-- [ ] Thread collapse/expand
+- [x] Thread participant list  # Basic participant display implemented
+- [x] Thread collapse/expand  # Implemented with collapsible UI
 - [ ] Thread search
 - [ ] Thread following
-- [ ] Parent message reference
+- [x] Parent message reference  # Implemented in message schema
 - [ ] Unread thread indicators
 
 ### 7. Emoji Reactions
-- [ ] Emoji picker
-- [ ] Reaction adding/removing
-- [ ] Reaction counts
+- [x] Emoji picker  # Implemented with common emoji selection
+- [x] Reaction adding/removing  # Implemented with optimistic updates
+- [x] Reaction counts  # Implemented with grouping by emoji
 - [ ] Custom emoji support
 - [ ] Reaction history
 - [ ] Most used emojis
