@@ -1,66 +1,107 @@
-// User related types
-export interface User {
+// User/Profile related types
+export interface Profile {
+  // Core Identity
   id: string;
   username: string;
-  full_name?: string;
-  avatar_url?: string;
+  full_name: string | null;
+  email: string;
+  
+  // Profile Information
+  avatar_url: string | null;
+  bio: string | null;
+  title: string | null;
+  timezone: string | null;
+  
+  // Status & Presence
   status: 'online' | 'offline' | 'away' | 'busy';
-  custom_status?: string;
+  custom_status: string | null;
+  last_seen_at: string;
+  
+  // Preferences
+  notification_preferences: {
+    email_notifications: boolean;
+    desktop_notifications: boolean;
+    mobile_notifications: boolean;
+    mention_notifications: boolean;
+  };
+  theme_preference: 'light' | 'dark' | 'system';
+  
+  // Metadata
   created_at: string;
   updated_at: string;
+  email_verified: boolean;
+  is_admin: boolean;
 }
 
 // Channel related types
 export interface Channel {
   id: string;
   name: string;
-  description?: string;
-  is_private: boolean;
+  description: string | null;
+  type: 'public' | 'private' | 'direct';
   created_by: string;
   created_at: string;
   updated_at: string;
+  last_message_at: string;
+  is_archived: boolean;
+  settings: {
+    notifications: boolean;
+    pinned_messages: string[];
+    default_thread_notifications: boolean;
+  };
+  metadata: Record<string, any>;
 }
 
 export interface ChannelMember {
+  id: string;
   channel_id: string;
-  user_id: string;
-  role: 'admin' | 'member';
+  profile_id: string;
+  role: 'owner' | 'admin' | 'moderator' | 'member';
   joined_at: string;
+  last_read_at: string;
+  is_muted: boolean;
+  settings: {
+    notifications: boolean;
+    thread_notifications: boolean;
+    mention_notifications: boolean;
+  };
+  metadata: Record<string, any>;
+  // Joined data
+  profile?: Profile;
 }
 
 // Message related types
 export interface Message {
   id: string;
   channel_id: string;
-  user_id: string;
+  sender_id: string;
   content: string;
+  type: 'text' | 'image' | 'file' | 'system';
+  parent_id: string | null;
   is_edited: boolean;
-  parent_message_id?: string;
+  edited_at: string | null;
   created_at: string;
   updated_at: string;
-  user?: User;
+  deleted_at: string | null;
+  metadata: Record<string, any>;
+  // Joined data
+  sender?: Profile;
   reactions?: MessageReaction[];
 }
 
 export interface MessageReaction {
+  id: string;
   message_id: string;
-  user_id: string;
+  profile_id: string;
   emoji: string;
   created_at: string;
 }
 
-// Direct Message types
-export interface DirectMessage {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  is_edited: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export interface MessageMap {
+  message: Message;
+  children: Map<string, MessageMap>;
+} 
 
-// File Attachment types
 export interface Attachment {
   id: string;
   message_id: string;
@@ -90,7 +131,7 @@ export interface ApiResponse<T> {
 
 // Socket Event types
 export interface TypingEvent {
-  user_id: string;
+  profile_id: string;
   channel_id: string;
 }
 
@@ -111,8 +152,4 @@ export interface ChatAreaProps {
 export interface MessageItemProps {
   message: Message;
   isThread?: boolean;
-}
-
-export interface ChannelCreationFormProps {
-  onClose: () => void;
 } 

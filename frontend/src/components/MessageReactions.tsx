@@ -7,14 +7,14 @@ import { Smile } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { useAuthContext } from '@/providers/AuthProvider';
-import { Reaction } from '@/types/message';
+import { MessageReaction } from '@/types';
 
 // Common emoji reactions
 const commonEmojis = ['👍', '❤️', '😂', '🎉', '🤔', '👀', '🚀', '💯'];
 
 interface MessageReactionsProps {
   messageId: string;
-  reactions: Reaction[];
+  reactions: MessageReaction[];
 }
 
 export function MessageReactions({ messageId, reactions }: MessageReactionsProps) {
@@ -23,7 +23,7 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
   const { user } = useAuthContext();
 
   // Group reactions by emoji
-  const reactionGroups = reactions.reduce((acc: Record<string, Reaction[]>, reaction) => {
+  const reactionGroups = reactions.reduce((acc: Record<string, MessageReaction[]>, reaction) => {
     if (!acc[reaction.emoji]) {
       acc[reaction.emoji] = [];
     }
@@ -53,10 +53,10 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
 
   const handleEmojiClick = async (emoji: string) => {
 		for (const r of reactions) {
-			console.log(r.emoji, emoji, r.user_id, user?.id)
+			console.log(r.emoji, emoji, r.profile_id, user?.id)
 		}
     const hasReacted = reactions.some(
-      r => r.emoji === emoji && r.user_id === user?.id
+      r => r.emoji === emoji && r.profile_id === user?.id
     );
 
     if (hasReacted) {
@@ -79,7 +79,7 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
           <div className="grid grid-cols-4 gap-2">
             {commonEmojis.map(emoji => {
               const hasReacted = reactions.some(
-                r => r.emoji === emoji && r.user_id === user?.id
+                r => r.emoji === emoji && r.profile_id === user?.id
               );
               return (
                 <Button
@@ -99,7 +99,7 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
       {/* Existing reactions */}
       <div className="flex gap-1">
         {Object.entries(reactionGroups).map(([emoji, reactions]) => {
-          const hasReacted = reactions.some(r => r.user_id === user?.id);
+          const hasReacted = reactions.some(r => r.profile_id === user?.id);
           return (
             <Button
               key={emoji}

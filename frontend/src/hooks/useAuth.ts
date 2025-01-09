@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { LoginCredentials, RegisterCredentials, User, ApiResponse } from '@/types';
+import { LoginCredentials, RegisterCredentials, Profile } from '@/types';
 import api from '@/lib/axios';
 import { socket } from '@/lib/socket';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface AuthResponse {
-  user: User;
+  user: Profile;
   session: {
     access_token: string;
   };
@@ -36,7 +36,7 @@ export function useAuth() {
     }
   }, []);
 
-  const setupAuth = (token: string, user: User) => {
+  const setupAuth = (token: string, user: Profile) => {
     // Store the token
     localStorage.setItem('token', token);
     
@@ -69,7 +69,7 @@ export function useAuth() {
   const { data: currentUser, error: userError } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<{ user: User }>>('/auth/me');
+      const response = await api.get<{ user: Profile }>('/auth/me');
       return response.data.user;
     },
     enabled: isInitialized && !!localStorage.getItem('token'), // Only run if initialized and has token
@@ -88,7 +88,7 @@ export function useAuth() {
 
   const login = useMutation<AuthResponse, Error, LoginCredentials>({
     mutationFn: async (data) => {
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', data);
+      const response = await api.post<AuthResponse>('/auth/login', data);
       return response.data;
     },
     onSuccess: (data) => {
@@ -100,7 +100,7 @@ export function useAuth() {
     }
   });
 
-  const register = useMutation<ApiResponse<{ user: User }>, Error, RegisterCredentials>({
+  const register = useMutation<{ user: Profile }, Error, RegisterCredentials>({
     mutationFn: async (data) => {
       const response = await api.post('/auth/register', data);
       return response.data;
@@ -117,17 +117,18 @@ export function useAuth() {
 
     try {
       // Use the existing user data from cache if available
-      const cachedUser = queryClient.getQueryData<User>(['currentUser']);
+      const cachedUser = queryClient.getQueryData<Profile>(['currentUser']);
       if (cachedUser) {
         return cachedUser;
       }
 
       // If no cached data, fetch from API
-      const response = await api.get<ApiResponse<{ user: User }>>('/auth/me');
+      const response = await api.get<{ user: Profile }>('/auth/me');
       const user = response.data.user;
       queryClient.setQueryData(['currentUser'], user);
       return user;
     } catch (error) {
+      console.error('Error initializing auth:', error);
       cleanupAuth();
       return null;
     }

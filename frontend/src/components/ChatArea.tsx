@@ -1,16 +1,18 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Smile, Send, Loader2, MessageSquare, ChevronDown, ChevronRight } from 'lucide-react'
+import { Smile, Send, Loader2, MessageSquare, ChevronDown, ChevronRight, Users } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useMessages } from '@/hooks/useMessages'
 import { useChannels } from '@/hooks/useChannels'
 import { MessageReactions } from '@/components/MessageReactions'
-import { Message, MessageMap } from '@/types/message'
+import { MessageMap } from '@/types'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { ChannelMembers } from "@/components/ChannelMembers"
+import { toast } from "@/components/ui/use-toast"
 
 interface ChatAreaProps {
   channelId: string;
@@ -39,20 +41,20 @@ function MessageComponent({ messageMap, onReply, depth = 0 }: {
       <div className="flex relative">
         {/* Thread lines for each depth level */}
         <div className={`flex space-x-6 group ${depth > 0 ? 'ml-6' : ''} relative`}>
-					{depth > 0 && Array.from({ length: depth }).map((_, index) => (
-						<div
-							key={index}
-							className={`top-0 bottom-0 border-l-2 ${threadColors[index % threadColors.length]} opacity-30`}
-							style={{ left: `${index * 16}px` }}
-						/>
-					))}
+          {depth > 0 && Array.from({ length: depth }).map((_, index) => (
+            <div
+              key={index}
+              className={`top-0 bottom-0 border-l-2 ${threadColors[index % threadColors.length]} opacity-30`}
+              style={{ left: `${index * 16}px` }}
+            />
+          ))}
           <Avatar>
-            <AvatarImage src={message.profiles.avatar_url || undefined} alt={message.profiles.username} />
-            <AvatarFallback>{message.profiles.username.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={message.sender?.avatar_url || undefined} alt={message.sender?.username || ''} />
+            <AvatarFallback>{message.sender?.username?.charAt(0).toUpperCase() || ''}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center space-x-2">
-              <span className="font-semibold">{message.profiles.username}</span>
+              <span className="font-semibold">{message.sender?.username || ''}</span>
               <span className="text-xs text-muted-foreground">
                 {new Date(message.created_at).toLocaleString()}
               </span>
@@ -91,7 +93,7 @@ function MessageComponent({ messageMap, onReply, depth = 0 }: {
                   <MessageSquare className="h-4 w-4 mr-1" />
                   Reply
                 </Button>
-                <MessageReactions messageId={message.id} reactions={message.reactions} />
+                <MessageReactions messageId={message.id} reactions={message.reactions || []} />
               </div>
             </div>
           </div>
@@ -117,10 +119,12 @@ export function ChatArea({ channelId }: ChatAreaProps) {
   const { messages, sendMessage } = useMessages(channelId);
   const [newMessage, setNewMessage] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const { channels } = useChannels();
+  const { getChannel } = useChannels();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+  const channel = getChannel(channelId);
 
   const scrollToBottom = () => {
     if (shouldAutoScroll) {
@@ -151,12 +155,18 @@ export function ChatArea({ channelId }: ChatAreaProps) {
       setShouldAutoScroll(true); // Enable auto-scroll when sending a message
       await sendMessage.mutateAsync({
         content: newMessage,
-        parent_message_id: replyingTo || undefined
+        parent_id: replyingTo || undefined,
+        channel_id: channelId
       });
       setNewMessage('');
       setReplyingTo(null);
     } catch (error) {
       console.error('Failed to send message:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to send message",
+        description: "There was an error sending your message. Please try again.",
+      })
     }
   };
 
@@ -165,7 +175,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
     setShouldAutoScroll(true);
   };
 
-  if (channels.isLoading || messages.isLoading) {
+  if (channel.isLoading || messages.isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -173,9 +183,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
     );
   }
 
-  const currentChannel = channels.data?.find(channel => channel.id === channelId);
-
-  if (!currentChannel) {
+  if (channel.isError || !channel.data) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         Channel not found
@@ -186,10 +194,29 @@ export function ChatArea({ channelId }: ChatAreaProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="border-b p-4">
-        <h2 className="text-lg font-semibold">#{currentChannel.name}</h2>
-        {currentChannel.description && (
-          <p className="text-sm text-muted-foreground">{currentChannel.description}</p>
-        )}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">#{channel.data.name}</h2>
+            {channel.data.description && (
+              <p className="text-sm text-muted-foreground">{channel.data.description}</p>
+            )}
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Users className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Channel Members</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <ChannelMembers channelId={channelId} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
       <ScrollArea 
         className="flex-1 p-4" 
