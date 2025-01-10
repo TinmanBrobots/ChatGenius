@@ -1,16 +1,12 @@
 "use client"
 
-import { useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Smile } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { MessageReaction } from '@/types';
-
-// Common emoji reactions
-const commonEmojis = ['👍', '❤️', '😂', '🎉', '🤔', '👀', '🚀', '💯'];
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 
 interface MessageReactionsProps {
   messageId: string;
@@ -18,7 +14,6 @@ interface MessageReactionsProps {
 }
 
 export function MessageReactions({ messageId, reactions }: MessageReactionsProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuthContext();
 
@@ -38,7 +33,6 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages'] });
-      setIsOpen(false);
     }
   });
 
@@ -51,10 +45,7 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
     }
   });
 
-  const handleEmojiClick = async (emoji: string) => {
-		for (const r of reactions) {
-			console.log(r.emoji, emoji, r.profile_id, user?.id)
-		}
+  const handleEmojiSelect = async (emoji: string) => {
     const hasReacted = reactions.some(
       r => r.emoji === emoji && r.profile_id === user?.id
     );
@@ -66,35 +57,23 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
     }
   };
 
+  // Get array of emojis that the current user has reacted with
+  const userReactions = reactions
+    .filter(r => r.profile_id === user?.id)
+    .map(r => r.emoji);
+
   return (
     <div className="flex items-center gap-2">
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
+      <EmojiPicker
+        onEmojiSelect={handleEmojiSelect}
+        selectedEmojis={userReactions}
+        trigger={
           <Button variant="ghost" size="sm" className="h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Smile className="h-4 w-4 mr-1" />
             React
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-2" align="start">
-          <div className="grid grid-cols-4 gap-2">
-            {commonEmojis.map(emoji => {
-              const hasReacted = reactions.some(
-                r => r.emoji === emoji && r.profile_id === user?.id
-              );
-              return (
-                <Button
-                  key={emoji}
-                  variant={hasReacted ? "secondary" : "ghost"}
-                  className="h-8 w-8 p-0"
-                  onClick={() => handleEmojiClick(emoji)}
-                >
-                  {emoji}
-                </Button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+        }
+      />
 
       {/* Existing reactions */}
       <div className="flex gap-1">
@@ -106,7 +85,7 @@ export function MessageReactions({ messageId, reactions }: MessageReactionsProps
               variant={hasReacted ? "secondary" : "outline"}
               size="sm"
               className="h-6 px-2 gap-1"
-              onClick={() => handleEmojiClick(emoji)}
+              onClick={() => handleEmojiSelect(emoji)}
             >
               <span>{emoji}</span>
               <span className="text-xs">{reactions.length}</span>

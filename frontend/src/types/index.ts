@@ -49,7 +49,17 @@ export interface Channel {
     pinned_messages: string[];
     default_thread_notifications: boolean;
   };
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
+  // Joined data
+  members?: {
+    profile_id: string;
+    profile: {
+      id: string;
+      username: string;
+      full_name: string | null;
+      avatar_url: string | null;
+    };
+  }[];
 }
 
 export interface ChannelMember {

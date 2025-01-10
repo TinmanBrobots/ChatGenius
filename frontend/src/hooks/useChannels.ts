@@ -3,11 +3,12 @@ import { Channel, ChannelMember } from '@/types';
 import api from '@/lib/axios';
 
 interface CreateChannelData {
-  name: string;
-  description?: string;
-  type: 'public' | 'private' | 'direct';
+  channelData: {
+    name: string;
+    description?: string;
+    type: 'public' | 'private' | 'direct';
+  }
   member_ids?: string[];
-  created_by: string;
 }
 
 interface UpdateChannelData {
@@ -25,20 +26,20 @@ interface UpdateMemberSettingsData {
   muted_until?: string | null;
 }
 
-export function useChannels() {
+export function useChannels(query?: { types?: Channel['type'][] }) {
   const queryClient = useQueryClient();
 
   // Channel Queries
   const channels = useQuery<Channel[], Error>({
-    queryKey: ['channels'],
+    queryKey: ['channels', query?.types],
     queryFn: async () => {
-      const response = await api.get<Channel[]>('/channels');
+      const response = await api.get<Channel[]>('/channels', { params: query });
       return response.data;
     },
     retry: false,
   });
 
-  const getChannel = (id: string) => useQuery<Channel, Error>({
+  const useGetChannel = (id: string) => useQuery<Channel, Error>({
     queryKey: ['channel', id],
     queryFn: async () => {
       const response = await api.get<Channel>(`/channels/${id}`);
@@ -47,13 +48,13 @@ export function useChannels() {
     enabled: !!id,
   });
 
-  const searchChannels = (query: string) => useQuery<Channel[], Error>({
-    queryKey: ['channels', 'search', query],
+  const useSearchChannels = (searchQuery: string) => useQuery<Channel[], Error>({
+    queryKey: ['channels', 'search', searchQuery],
     queryFn: async () => {
-      const response = await api.get<Channel[]>(`/channels/search?q=${query}`);
+      const response = await api.get<Channel[]>(`/channels/search?q=${searchQuery}`);
       return response.data;
     },
-    enabled: !!query,
+    enabled: !!searchQuery,
   });
 
   // Channel Mutations
@@ -98,10 +99,11 @@ export function useChannels() {
   });
 
   // Channel Member Queries
-  const getChannelMembers = (channelId: string) => useQuery<ChannelMember[], Error>({
+  const useGetChannelMembers = (channelId: string) => useQuery<ChannelMember[], Error>({
     queryKey: ['channelMembers', channelId],
     queryFn: async () => {
       const response = await api.get<ChannelMember[]>(`/channels/${channelId}/members`);
+      console.log('Response', response);
       return response.data;
     },
     enabled: !!channelId,
@@ -110,11 +112,22 @@ export function useChannels() {
   // Channel Member Mutations
   const addMember = useMutation({
     mutationFn: async ({ channelId, profileId }: { channelId: string; profileId: string }) => {
-      const response = await api.post<ChannelMember>(`/channels/${channelId}/members`, { profile_id: profileId });
+      const response = await api.post<ChannelMember>(`/channels/${channelId}/members`, { profileId });
       return response.data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['channelMembers', variables.channelId] });
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+    },
+  });
+
+  const joinChannel = useMutation({
+    mutationFn: async (channelId: string) => {
+      const response = await api.post<ChannelMember>(`/channels/${channelId}/join`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
     },
   });
 
@@ -168,19 +181,20 @@ export function useChannels() {
   return {
     // Channel operations
     channels,
-    getChannel,
-    searchChannels,
+    getChannel: useGetChannel,
+    searchChannels: useSearchChannels,
     createChannel,
     updateChannel,
     archiveChannel,
     deleteChannel,
     // Member operations
-    getChannelMembers,
+    getChannelMembers: useGetChannelMembers,
     addMember,
     removeMember,
     updateMemberRole,
     updateMemberSettings,
     updateLastRead,
     toggleMute,
+    joinChannel,
   };
 } 

@@ -12,13 +12,11 @@ import { useRouter } from 'next/navigation'
 import { Hash, Lock, Users } from 'lucide-react'
 import { ComboboxMulti, ComboboxOption } from '@/components/ui/combobox-multi'
 import { toast } from '@/components/ui/use-toast'
-import { useAuth } from '@/hooks/useAuth'
 interface ChannelCreationFormProps {
   onClose: () => void
 }
 
 export function ChannelCreationForm({ onClose }: ChannelCreationFormProps) {
-  const { currentUser: user } = useAuth()
   const [channelName, setChannelName] = useState('')
   const [description, setDescription] = useState('')
   const [isPrivate, setIsPrivate] = useState(false)
@@ -58,21 +56,22 @@ export function ChannelCreationForm({ onClose }: ChannelCreationFormProps) {
     e.preventDefault()
     try {
       const channel = await createChannel.mutateAsync({
-        name: channelName.toLowerCase().replace(/\s+/g, '-'),
-        description,
-        type: isPrivate ? 'private' : 'public',
+        channelData: {
+          name: channelName.toLowerCase().replace(/\s+/g, '-'),
+          description,
+          type: isPrivate ? 'private' : 'public',
+        },
         member_ids: isPrivate ? selectedMembers : undefined,
-        created_by: user?.id as string
       })
 
       toast({
         title: "Channel created",
-        description: `#${channel.data.name} has been created successfully.`,
+        description: `#${channel.name} has been created successfully.`,
       })
 
       onClose()
       // Navigate to the new channel
-      router.push(`/chat/${channel.data.id}`)
+      router.push(`/chat/${channel.id}`)
     } catch (error) {
       console.error('Failed to create channel:', error)
       toast({
