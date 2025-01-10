@@ -3,7 +3,7 @@
 import { useChannels } from '@/hooks/useChannels'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useAuth } from '@/hooks/useAuth'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarWithStatus } from "@/components/ui/avatar-with-status"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ComboboxMulti } from "@/components/ui/combobox-multi"
@@ -162,38 +162,32 @@ export function DirectMessageList() {
           </DialogContent>
         </Dialog>
       </div>
-      <ul className="space-y-2">
-        {directChannels.map((channel) => {
-          const otherMember = getOtherMember(channel);
-          if (!otherMember) return null;
 
+      <div className="space-y-1">
+        {channels.data?.filter(channel => channel.type === 'direct').map((channel) => {
+          const otherUser = channel.members?.find(member => member.profile_id !== currentUser?.id)?.profile;
+          
           return (
-            <li key={channel.id}>
-              <Link 
-                href={`/chat/${channel.id}`} 
-                className={cn(
-                  "flex items-center px-2 py-1.5 text-sm hover:bg-accent rounded-md transition-colors",
-                  "group relative",
-                  currentChannelId === channel.id && "bg-accent"
-                )}
-              >
-                <Avatar className="w-8 h-8 mr-2">
-                  <AvatarImage src={otherMember.avatar_url || undefined} />
-                  <AvatarFallback>{otherMember.username?.charAt(0).toUpperCase() || ''}</AvatarFallback>
-                </Avatar>
-                <div className="truncate flex-1">
-                  <div className="font-medium">{otherMember.full_name}</div>
-                  {otherMember.username && (
-                    <div className="text-xs text-muted-foreground truncate">
-                      @{otherMember.username}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            </li>
+            <Link 
+              key={channel.id} 
+              href={`/chat/${channel.id}`}
+              className={cn(
+                "flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors",
+                params?.channelId === channel.id && "bg-accent"
+              )}
+            >
+              <AvatarWithStatus
+                className="h-8 w-8"
+                src={otherUser?.avatar_url || undefined}
+                fallback={otherUser?.username?.charAt(0).toUpperCase() || ''}
+                status={otherUser?.status || 'offline'}
+                lastSeen={otherUser?.last_seen_at}
+              />
+              <span className="text-sm font-medium">{otherUser?.username || 'Unknown User'}</span>
+            </Link>
           );
         })}
-      </ul>
+      </div>
     </div>
   )
 } 

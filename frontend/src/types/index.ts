@@ -58,6 +58,8 @@ export interface Channel {
       username: string;
       full_name: string | null;
       avatar_url: string | null;
+      status: 'online' | 'offline' | 'away' | 'busy';
+      last_seen_at: string;
     };
   }[];
 }

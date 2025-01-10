@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useChannels } from '@/hooks/useChannels'
 import { useProfiles } from '@/hooks/useProfiles'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarWithStatus } from "@/components/ui/avatar-with-status"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2, MoreVertical, Crown, Shield, UserX, UserPlus, X } from 'lucide-react'
@@ -220,10 +220,12 @@ export function ChannelMembers({ channelId }: ChannelMembersProps) {
           {members.data?.map((member) => (
             <div key={member.profile_id} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Avatar>
-                  <AvatarImage src={member.profile?.avatar_url || undefined} alt={member.profile?.username || ''} />
-                  <AvatarFallback>{member.profile?.username?.charAt(0).toUpperCase() || ''}</AvatarFallback>
-                </Avatar>
+                <AvatarWithStatus
+                  src={member.profile?.avatar_url || undefined}
+                  fallback={member.profile?.username?.charAt(0).toUpperCase() || ''}
+                  status={member.profile?.status || 'offline'}
+                  lastSeen={member.profile?.last_seen_at}
+                />
                 <div>
                   <div className="flex items-center gap-1">
                     <span className="font-medium">{member.profile?.username || ''}</span>
@@ -242,18 +244,15 @@ export function ChannelMembers({ channelId }: ChannelMembersProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuLabel>Member Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleRoleChange(member.profile_id, 'admin')}>
-                      <Shield className="h-4 w-4 mr-2" />
                       Make Admin
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem onClick={() => handleRoleChange(member.profile_id, 'moderator')}>
-                      <Shield className="h-4 w-4 mr-2" />
+                    <DropdownMenuItem onClick={() => handleRoleChange(member.profile_id, 'moderator')}>
                       Make Moderator
-                    </DropdownMenuItem> */}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleRoleChange(member.profile_id, 'member')}>
-											<X className="h-4 w-4 mr-2" />
                       Remove Role
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

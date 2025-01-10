@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from '@/hooks/useAuth'
 import { ChannelCreationForm } from "@/components/ChannelCreationForm"
 import { useState } from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarWithStatus } from "@/components/ui/avatar-with-status"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,10 +62,13 @@ export function Sidebar() {
               variant="ghost" 
               className="w-full flex items-center justify-start gap-2 px-2 hover:bg-accent"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={currentUser?.avatar_url || undefined} />
-                <AvatarFallback>{currentUser?.full_name?.charAt(0).toUpperCase() || ''}</AvatarFallback>
-              </Avatar>
+              <AvatarWithStatus
+                className="h-8 w-8"
+                src={currentUser?.avatar_url || undefined}
+                fallback={currentUser?.full_name?.charAt(0).toUpperCase() || ''}
+                status={currentUser?.status || 'offline'}
+                lastSeen={currentUser?.last_seen_at}
+              />
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium leading-none">{currentUser?.full_name}</p>
                 {currentUser?.username && (
